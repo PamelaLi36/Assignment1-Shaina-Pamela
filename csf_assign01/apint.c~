@@ -1,0 +1,182 @@
+/*
+ * CSF Assignment 1
+ * Arbitrary-precision integer data type
+ * Function implementations
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <assert.h>
+#include "apint.h"
+
+ApInt *apint_create_from_u64(uint64_t val) {
+  ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
+  new_apint->len = 1;
+  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
+  new_apint->data[0] = val;
+  new_apint->isNegative = false;
+
+  // assert(0);
+  // return NULL;
+  return new_apint;
+}
+
+ApInt *apint_create_from_hex(const char *hex) {
+	/* TODO: implement */
+	assert(0);
+	return NULL;
+}
+
+void apint_destroy(ApInt *ap) {
+  //free(ap->data);
+  free(ap);
+  //assert(0);
+}
+
+int apint_is_zero(const ApInt *ap) {
+	/* TODO: implement */
+	assert(0);
+	return 0;
+}
+
+int apint_is_negative(const ApInt *ap) {
+	/* TODO: implement */
+	assert(0);
+	return 0;
+}
+
+uint64_t apint_get_bits(const ApInt *ap, unsigned n) {
+  return ap->data[n];
+	//assert(0);
+	//return 0UL;
+}
+
+int apint_highest_bit_set(const ApInt *ap) {
+  uint64_t temp = ap->data[0];
+  int hb = 0;
+
+  if(temp == 0) {
+    return -1;
+  }
+
+  for(int i = 0; i < 64; i++) {
+    if(temp & 1 == 1) {
+      hb = i;
+    }
+    temp >>=1;
+  }
+
+  return hb;
+  //assert(0);
+  //return -1;
+}
+
+char *apint_format_as_hex(const ApInt *ap) {
+	/* TODO: implement */
+	assert(0);
+	return NULL;
+}
+
+ApInt *apint_negate(const ApInt *ap) {
+  ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
+  new_apint->data = ap->data;
+  new_apint->len = ap->len;
+
+  if( ap->isNegative ) {
+    new_apint->isNegative = false;
+  } else {
+    new_apint->isNegative = true;
+  }
+
+  //assert(0);
+  return new_apint;
+}
+
+ApInt *apint_add(const ApInt *a, const ApInt *b) {
+  ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
+  new_apint->len = 1;
+  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
+
+  if(a->isNegative && b->isNegative) {
+    new_apint->data[0] = addVal(a->data[0], b->data[0]);
+    new_apint->isNegative = true;
+  }
+  else if(!(a->isNegative) && !(b->isNegative)) {
+    new_apint->data[0] = addVal(a->data[0], b->data[0]);
+    new_apint->isNegative = false;
+  }
+  else {
+    if((a->isNegative) && (a->data[0] > b->data[0])) {
+      new_apint->data[0] = subVal(a->data[0], b->data[0]);
+      new_apint->isNegative = true;
+    } else if((a->isNegative) && (b->data[0] >= a->data[0])) {
+      new_apint->data[0] = subVal(b->data[0], a->data[0]);
+      new_apint->isNegative = false;
+    } else if((b->isNegative) && (b->data[0] > a->data[0])) {
+      new_apint->data[0] = subVal(b->data[0], a->data[0]);
+      new_apint->isNegative = true;
+    } else if((b->isNegative) && (a->data[0] >= b->data[0])) {
+      new_apint->data[0] = subVal(a->data[0], b->data[0]);
+      new_apint->isNegative = false;
+    }
+  }
+
+  return new_apint;
+  //assert(0);
+  //return NULL;
+}
+
+
+ApInt *apint_sub(const ApInt *a, const ApInt *b) {
+  ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
+  new_apint->len = 1;
+  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
+  new_apint->isNegative = false;
+  new_apint->data[0] = subVal(a->data[0], b->data[0]);
+
+  if(!(a->isNegative) && !(b->isNegative)) {
+    if(a->data[0] >= b->data[0] ) {
+      new_apint->isNegative = false;
+    } else { new_apint->isNegative = true; }
+  }
+  else if(a->isNegative && b->isNegative) {
+    if(a->data[0] > b->data[0] ) {
+      new_apint->isNegative = true;
+    } else { new_apint->isNegative = false; }
+  }
+  else {
+    new_apint->data[0] = addVal(a->data[0], b->data[0]);
+
+    if(a->isNegative) { new_apint->isNegative = true; }
+    else { new_apint->isNegative = false; }
+  }
+
+  return new_apint;
+  //assert(0);
+  //return NULL;
+}
+
+int apint_compare(const ApInt *left, const ApInt *right) {
+  if( !(left->isNegative) && !(right->isNegative) ) {
+    if(left->data[0] > right->data[0]) { return 1; }
+    else if(left->data[0] < right->data[0]) { return -1; }
+    else { return 0; }
+  }
+  else if (left->isNegative && right->isNegative) {
+    if(left->data[0] > right->data[0]) { return -1; }
+    else if(left->data[0] < right->data[0]) { return 1; }
+    else { return 0; }
+  }
+  else {
+    if(left->isNegative) {return -1; }
+    else { return 1; }
+  }
+	//assert(0);
+	//return 0;
+}
+
+
+//helper function
+uint64_t addVal(uint64_t a, uint64_t b) { return a + b; }
+uint64_t subVal(uint64_t a, uint64_t b) { return a - b; }
