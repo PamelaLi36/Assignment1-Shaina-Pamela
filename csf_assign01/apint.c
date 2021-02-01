@@ -4,6 +4,7 @@
  * Function implementations
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -76,9 +77,71 @@ int apint_highest_bit_set(const ApInt *ap) {
 }
 
 char *apint_format_as_hex(const ApInt *ap) {
-	/* TODO: implement */
-	assert(0);
-	return NULL;
+  uint64_t temp = ap->data[0];
+  char store[17];
+  char* storep = store;
+  char *return_string = (char*)calloc(17, sizeof(char));
+  int idx = 0;
+
+  if( temp == 0 ) {
+    *return_string = '0';
+    *(return_string + 1) = '\0';
+    return return_string;
+  }
+  
+  while (temp != 0) {
+    switch(temp % 16) {
+    case 0 : *(storep + idx) = '0';
+      break;
+    case 1 : *(storep + idx) = '1';
+      break;
+    case 2 : *(storep + idx) = '2';
+      break;
+    case 3 : *(storep + idx) = '3';
+      break;
+    case 4 : *(storep + idx) = '4';
+      break;
+    case 5 : *(storep + idx) = '5';
+      break;
+    case 6 : *(storep + idx) = '6';
+      break;
+    case 7 : *(storep + idx) = '7';
+      break;
+    case 8 : *(storep + idx) = '8';
+      break;
+    case 9 : *(storep + idx) = '9';
+      break;
+    case 10 : *(storep + idx) = 'a';
+      break;
+    case 11 : *(storep + idx) = 'b';
+      break;
+    case 12 : *(storep + idx) = 'c';
+      break;
+    case 13 : *(storep + idx) = 'd';
+      break;
+    case 14 : *(storep + idx) = 'e';
+      break;
+    case 15 : *(storep + idx) = 'f';
+      break;
+    }
+    idx++;
+    temp = temp/16;
+  }
+
+  int i = 0;
+  if ( ap->isNegative) {
+    *(return_string + i) = '-';
+    i++;
+  }
+
+  for(; i <= idx; i++) {
+    *(return_string + i) = store[idx - i - 1];
+  }
+
+  *(return_string + i) = '\0';
+  return return_string;
+  //assert(0);
+  //return NULL;
 }
 
 ApInt *apint_negate(const ApInt *ap) {
@@ -101,15 +164,19 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
   new_apint->len = 1;
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
 
+  printf("this is a: %lu, and this is b: %lu\n", a->data[0], b->data[0]);
   if(a->isNegative && b->isNegative) {
+    printf("both a & b are negative\n");
     new_apint->data[0] = addVal(a->data[0], b->data[0]);
     new_apint->isNegative = true;
   }
   else if(!(a->isNegative) && !(b->isNegative)) {
+    printf("both a and b are positive\n");
     new_apint->data[0] = addVal(a->data[0], b->data[0]);
     new_apint->isNegative = false;
   }
   else {
+    printf("either a or b is positive\n");
     if((a->isNegative) && (a->data[0] > b->data[0])) {
       new_apint->data[0] = subVal(a->data[0], b->data[0]);
       new_apint->isNegative = true;
@@ -125,6 +192,7 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
     }
   }
 
+  printf("returning this value: %lu\n", new_apint->data[0]);
   return new_apint;
   //assert(0);
   //return NULL;
@@ -136,25 +204,41 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
   new_apint->len = 1;
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
   new_apint->isNegative = false;
-  new_apint->data[0] = subVal(a->data[0], b->data[0]);
+  //new_apint->data[0] = subVal(a->data[0], b->data[0]);
 
+  printf("\n substracting \n");
+  printf("this is a: %lu, and this is b: %lu\n", a->data[0], b->data[0]);
   if(!(a->isNegative) && !(b->isNegative)) {
+     printf("both a & b are positive\n");
     if(a->data[0] >= b->data[0] ) {
+      new_apint->data[0] = subVal(a->data[0], b->data[0]);
       new_apint->isNegative = false;
-    } else { new_apint->isNegative = true; }
+    } else {
+      new_apint->data[0] = subVal(b->data[0], a->data[0]);
+      new_apint->isNegative = true;
+    }
   }
   else if(a->isNegative && b->isNegative) {
+    printf("both a & b are negative\n");
     if(a->data[0] > b->data[0] ) {
+      new_apint->data[0] = subVal(a->data[0], b->data[0]);
       new_apint->isNegative = true;
-    } else { new_apint->isNegative = false; }
+    } else {
+      new_apint->data[0] = subVal(b->data[0], a->data[0]);
+      new_apint->isNegative = false;
+    }
   }
   else {
+     printf("either a or b is negative\n");
     new_apint->data[0] = addVal(a->data[0], b->data[0]);
 
     if(a->isNegative) { new_apint->isNegative = true; }
     else { new_apint->isNegative = false; }
   }
 
+  printf("returning this value: %lu\n", new_apint->data[0]);
+  if(new_apint->isNegative) { printf("this is neg\n"); }
+  
   return new_apint;
   //assert(0);
   //return NULL;
