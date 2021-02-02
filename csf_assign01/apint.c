@@ -30,6 +30,7 @@ ApInt *apint_create_from_hex(const char *hex) {
 }
 
 void apint_destroy(ApInt *ap) {
+  free(ap->data);
   free(ap);
   //assert(0);
 }
@@ -78,9 +79,9 @@ int apint_highest_bit_set(const ApInt *ap) {
 
 char *apint_format_as_hex(const ApInt *ap) {
   uint64_t temp = ap->data[0];
-  char store[17];
+  char store[18]; //16 hexidecimal + '\0' + '-' = 18
   char* storep = store;
-  char *return_string = (char*)calloc(17, sizeof(char));
+  char *return_string = (char*)calloc(18, sizeof(char));
   int idx = 0;
 
   if( temp == 0 ) {
@@ -139,8 +140,9 @@ char *apint_format_as_hex(const ApInt *ap) {
     *(return_string + i) = store[idx - r - 1];
     i++; // i and r are separate to account for the mismatched index when the data value is negative
   }
-
+  //  printf("This is i: %d\n", i);
   *(return_string + i) = '\0';
+  printf("This is the return string: %s", return_string);
   return return_string;
   //assert(0);
   //return NULL;
@@ -148,9 +150,13 @@ char *apint_format_as_hex(const ApInt *ap) {
 
 ApInt *apint_negate(const ApInt *ap) {
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
-  new_apint->data = ap->data;
-  new_apint->len = ap->len;
-
+  new_apint->data = (uint64_t*)malloc( ap->len * sizeof(uint64_t));
+  new_apint->data[0] = ap->data[0];
+  //ap->data;
+   new_apint->len = ap->len;
+   //uint64_t * temp = (uint64_t*)malloc( new_apint->len * sizeof(uint64_t));
+   //new_apint->data = temp;
+  
   if( ap->isNegative ) {
     new_apint->isNegative = false;
   } else {
@@ -247,6 +253,7 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
 }
 
 int apint_compare(const ApInt *left, const ApInt *right) {
+  printf("This is the left: %lu, right: %lu\n",left->data[0], right->data[0]); 
   if( !(left->isNegative) && !(right->isNegative) ) {
     if(left->data[0] > right->data[0]) { return 1; }
     else if(left->data[0] < right->data[0]) { return -1; }
