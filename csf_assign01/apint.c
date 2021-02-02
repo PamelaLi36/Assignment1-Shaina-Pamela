@@ -126,16 +126,18 @@ char *apint_format_as_hex(const ApInt *ap) {
     }
     idx++;
     temp = temp/16;
+    
   }
 
-  int i = 0;
+  int i = 0; //new index for reversed string return_string
   if ( ap->isNegative) {
     *(return_string + i) = '-';
     i++;
   }
 
-  for(; i <= idx; i++) {
-    *(return_string + i) = store[idx - i - 1];
+  for(int r= 0; r <= idx; r++) { //r is an index that will iterate store from reverse order
+    *(return_string + i) = store[idx - r - 1];
+    i++; // i and r are separate to account for the mismatched index when the data value is negative
   }
 
   *(return_string + i) = '\0';
