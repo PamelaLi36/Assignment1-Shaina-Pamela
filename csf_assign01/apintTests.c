@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 	TEST(testCompare);
 	TEST(testFormatAsHex);
 	TEST(testAdd);
-	TEST(testSub);
+	//TEST(testSub);
 	/* TODO: use TEST macro to execute more test functions */
 
 	TEST_FINI();
@@ -94,10 +94,10 @@ void testCreateFromU64(TestObjs *objs) {
 }
 
 void testHighestBitSet(TestObjs *objs) {
-	ASSERT(-1 == apint_highest_bit_set(objs->ap0));
-	ASSERT(0 == apint_highest_bit_set(objs->ap1));
-	ASSERT(26 == apint_highest_bit_set(objs->ap110660361));
-	ASSERT(63 == apint_highest_bit_set(objs->max1));
+  ASSERT(-1 == apint_highest_bit_set(objs->ap0));
+  ASSERT(0 == apint_highest_bit_set(objs->ap1));
+  ASSERT(26 == apint_highest_bit_set(objs->ap110660361));
+  ASSERT(63 == apint_highest_bit_set(objs->max1));
 }
 
 void testCompare(TestObjs *objs) {
@@ -119,7 +119,7 @@ void testFormatAsHex(TestObjs *objs) {
 	char *s;
 
 	ASSERT(0 == strcmp("0", (s = apint_format_as_hex(objs->ap0))));
-	free(s);
+	free(s); 
 
 	ASSERT(0 == strcmp("1", (s = apint_format_as_hex(objs->ap1))));
 	  free(s);
@@ -159,11 +159,11 @@ void testAdd(TestObjs *objs) {
 	apint_destroy(sum);
 	free(s);
 	
-	/* FFFFFFFFFFFFFFFF + 1 = 10000000000000000
+	/* FFFFFFFFFFFFFFFF + 1 = 10000000000000000 */
 	sum = apint_add(objs->max1, objs->ap1);
 	ASSERT(0 == strcmp("10000000000000000", (s = apint_format_as_hex(sum))));
 	apint_destroy(sum);
-	free(s); */
+	free(s);
 }
 
 void testSub(TestObjs *objs) {

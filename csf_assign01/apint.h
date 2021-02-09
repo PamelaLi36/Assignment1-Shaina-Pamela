@@ -206,6 +206,8 @@ extern "C" {
    */
   uint64_t addVal(uint64_t a, uint64_t b);
 
+  void add_reorganize(ApInt* a);
+  
   /*
    * Computes the difference of two unsigned integers (uint64_t) instances.
    *
@@ -217,6 +219,12 @@ extern "C" {
    *   an uint64_t instance representing the difference  of a and b.
    */
   uint64_t subVal(uint64_t a, uint64_t b);
+
+  void sub_reorganize(ApInt* a);
+  
+  char deci_to_hexi(uint64_t temp);
+
+  uint64_t hexi_to_deci(const char hex);
   
 #ifdef __cplusplus
 }

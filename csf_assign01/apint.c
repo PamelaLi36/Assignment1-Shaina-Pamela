@@ -7,6 +7,7 @@
  * pli36@jhu.edu
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -19,18 +20,45 @@ ApInt *apint_create_from_u64(uint64_t val) {
   and sets its instance variables to default
   with the exception of data which is specified */
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
-  new_apint->len = 1;
+  new_apint->len = 1/* + val/(2^64)*/;
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
-  new_apint->data[0] = val;
+  new_apint->data[0] = val; 
   new_apint->isNegative = false;
-
+  //if it overloads that means 1 will carry over to the next index
   return new_apint;
 }
 
 ApInt *apint_create_from_hex(const char *hex) {
-  /* TODO: implement */
-  assert(0);
-  return NULL;
+  ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
+  new_apint->len = 1;
+
+  int hasMinus = 0;
+  new_apint->isNegative = false;
+  if((strlen(hex) > 16) && (hex[0] != '-')) {
+    new_apint->len += strlen(hex)/16;
+  }
+  else if (hex[0] == '-') {
+    new_apint->isNegative = true;
+    hasMinus = 1;
+  }
+
+  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
+  int r = new_apint->len - 1;
+  int position = 0;
+  uint64_t sum = 0;
+
+  for (int i = strlen(hex)-1; i >= 0 + hasMinus; i--) {
+    if(i/16 > 0) { //overflow
+      new_apint->data[r] = sum;
+      sum = 0;
+      position = 0;
+      r--;
+    }
+    sum = hexi_to_deci(hex[i]) * 16^(position);
+    position++;
+  }
+    
+  return new_apint;
 }
 
 void apint_destroy(ApInt *ap) {
@@ -39,12 +67,15 @@ void apint_destroy(ApInt *ap) {
 }
 
 int apint_is_zero(const ApInt *ap) {
-  if( ap->data[0] == 0 ) { //checks numerical value of ap
-    return 1; //returns appropriate int based on checked condition
+  int isZero = 1; //default
+  
+  for(int i = 0; i < (int)ap->len; i++) { //0
+    if( ap->data[i] != 0 ) {  
+      isZero = 0; //detects index different from 0
+    }
   }
-  else {
-    return 0; //returns appropriate int based on checked condition
-  }
+  
+  return isZero;
 }
 
 int apint_is_negative(const ApInt *ap) {
@@ -61,76 +92,57 @@ uint64_t apint_get_bits(const ApInt *ap, unsigned n) {
 }
 
 int apint_highest_bit_set(const ApInt *ap) {
-
-  uint64_t temp = ap->data[0]; //temporary unsigned int storing ap's numerical value
   int highest_bit = 0; //bit to return
   
-  if(temp == 0) {
+  if( apint_is_zero(ap) == 1 ) {
     return -1;
   }
 
-  for(int i = 0; i < 64; i++) { //iterating through binary rep of ap
-    if((temp & 1) == 1) { //checks to see if the bit at right most end of the binary representation of ap is 1
-      highest_bit = i; //stores position inside highest bit variable
+  for(int j = ap->len -1; j >=0; j--) { //iterating through array backwards
+    uint64_t temp = ap->data[j]; //???
+    for(int i = 0; i < 64; i++) {
+      if((temp & 1) == 1) { //checks to see if the bit at right most end of the binary representation of ap is 1
+	highest_bit = i; //stores position inside highest bit variable
+      }
+      temp >>=1; //shifts right to check next highest bit position
     }
-    temp >>=1; //shifts right to check next highest bit position
+  }
+
+  if(ap->len > 1) {
+    highest_bit += 54 * ap->len;
   }
 
   return highest_bit;
 }
 
 char *apint_format_as_hex(const ApInt *ap) {
-  uint64_t temp = ap->data[0];
-  char store[18]; //16 hexidecimal + '\0' + '-' = 18
+  char store[2 + 16*ap->len]; //16 hexidecimal + '\0' + '-' = 18
   char* storep = store; 
-  char *return_string = (char*)calloc(18, sizeof(char));
+  char *return_string = (char*)calloc(2 + 16*ap->len, sizeof(char));
   int idx = 0;
 
-  if( temp == 0 ) { //special case if ap's numerical value is 0
+  if( apint_is_zero(ap) == 1 ) { //special case if ap's numerical value is 0
     *return_string = '0';
     *(return_string + 1) = '\0';
+    printf("returning 0\n");
     return return_string;
   }
   
-  while (temp != 0) { //iterates until last remainder possible of temp/16
-    //conversion from base 10 to hexadecimal
-    switch(temp % 16) {
-    case 0 : *(storep + idx) = '0';
-      break;
-    case 1 : *(storep + idx) = '1';
-      break;
-    case 2 : *(storep + idx) = '2';
-      break;
-    case 3 : *(storep + idx) = '3';
-      break;
-    case 4 : *(storep + idx) = '4';
-      break;
-    case 5 : *(storep + idx) = '5';
-      break;
-    case 6 : *(storep + idx) = '6';
-      break;
-    case 7 : *(storep + idx) = '7';
-      break;
-    case 8 : *(storep + idx) = '8';
-      break;
-    case 9 : *(storep + idx) = '9';
-      break;
-    case 10 : *(storep + idx) = 'a';
-      break;
-    case 11 : *(storep + idx) = 'b';
-      break;
-    case 12 : *(storep + idx) = 'c';
-      break;
-    case 13 : *(storep + idx) = 'd';
-      break;
-    case 14 : *(storep + idx) = 'e';
-      break;
-    case 15 : *(storep + idx) = 'f';
-      break;
-    }
-    idx++;
-    temp = temp/16; //updates temp to figure out next char in hexadecimal representation
+  for(int j = ap->len - 1; j >= 0; j--) {
+    uint64_t temp = ap->data[j];
+    int notDone = 0;
     
+    if(temp == 0 && j != 1) {
+      notDone = 16;
+    }
+    
+    while ((temp != 0) || notDone >= 0){
+      *(storep + idx) = deci_to_hexi(temp%16);
+      idx++;
+      temp = temp/16;
+      notDone--;
+      printf("gg\n")
+    }
   }
 
   int i = 0; //new index for reversed string return_string
@@ -145,6 +157,7 @@ char *apint_format_as_hex(const ApInt *ap) {
   }
  
   *(return_string + i) = '\0';
+  printf("returning following string: %s\n", return_string);
   return return_string;
 }
 
@@ -155,7 +168,7 @@ ApInt *apint_negate(const ApInt *ap) {
   new_apint->data[0] = ap->data[0];
   new_apint->len = ap->len;
   
-  if( ap->isNegative ) { //checks if ap is negative and sets new ApInt instance to opposite sign
+  if( ( apint_is_zero(ap) ) || ( ap->isNegative ) ) { //checks if ap is negative and sets new ApInt instance to opposite sign
     new_apint->isNegative = false;
   } else {
     new_apint->isNegative = true;
@@ -168,41 +181,115 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
 
   //creates new Apint instance to return
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
-  new_apint->len = 1;
+  ApInt * small;
+  ApInt * large;
+  uint64_t overflow = 0;
+
+  if(apint_compare(a,b) == 1) {
+    small = b; 
+    large = a;
+  }
+  else if((apint_compare(a,b) == -1) || (apint_compare(a,b) == 0)) {
+    small = a;
+    large = b;
+    printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[0], large->data[0]);
+  }
+
+  new_apint->len = large->len;
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
 
+  int r = small->len - 1; //index for smaller obj
+
   if(a->isNegative && b->isNegative) { //cheks if both ApInts are negative
-    new_apint->data[0] = addVal(a->data[0], b->data[0]); // add unsigned values
+    for( int i = large->len - 1; i >= 0; i--) {
+      if( i <= (int)small->len ) {
+	new_apint->data[i] = addVal(large->data[i] + overflow, small->data[r]); // add unsigned values
+	r--;
+      }
+      else {
+	new_apint->data[i] = large->data[i] + overflow;
+      }
+
+      overflow = 0;
+      if( (new_apint->data[i] <= small->data[i]) ||  (new_apint->data[i] <= large->data[i]) ) {
+	overflow++;
+      }
+    }
+
+    if(overflow == 1) {
+      new_apint->data = (uint64_t*)realloc(new_apint->data, large->len +1);
+      add_reorganize(new_apint);
+      new_apint->data[0] = new_apint->data[0] + overflow;
+    }
+    
     new_apint->isNegative = true; // set appropriate sign for addition of two negative values
   }
   else if(!(a->isNegative) && !(b->isNegative)) { //checks if both ApInts are positive
-    new_apint->data[0] = addVal(a->data[0], b->data[0]); //adds unsigned values
+    printf("entering both positive loop\n");
+    for( int i = large->len - 1; i >= 0; i--) {
+      printf("len is: %lu, and i is: %d\n", large->len, i);
+      if(r >= 0) {
+	printf("large data is: %lu, and small data is: %lu\n", large->data[i], small->data[r]);
+	new_apint->data[i] = addVal(large->data[i] + overflow, small->data[r]);
+	printf("overflow: %d\n", overflow);
+	printf("when r = 0, new_apint->data[i] after adding is: %lu\n", new_apint->data[i]);
+	r--;
+      }
+      else {
+	new_apint->data[i] = small->data[i] + overflow;
+      }
+
+      overflow = 0;
+      if ((new_apint->data[i] < small->data[i]) || (new_apint->data[i] < large->data[i])) {
+	overflow++;
+      }
+    }
+
+    if(overflow == 1) {
+      printf("there is overflow\n");
+      new_apint->data = (uint64_t*)realloc(new_apint->data, large->len + 1);
+      new_apint->len = large->len + 1;
+      add_reorganize(new_apint);
+      
+      printf("\nreorganized array\n");
+      for(int i = 0; i < large->len + 1; i++) {
+	printf("%lu\n", new_apint->data[i]);
+      }
+      
+      new_apint->data[0] = new_apint->data[0] + overflow;
+    }
     new_apint->isNegative = false; // set appropriate sign for addition of two positive values
   }
   else { // when either a or b is negative
+    ApInt * temp = new_apint;
 
-    //when a is negative
-    //check which unsigned value is larger / or if they are equal
-    // subract values and set appropriate sign accordingly
-    if((a->isNegative) && (a->data[0] > b->data[0])) {
-      new_apint->data[0] = subVal(a->data[0], b->data[0]);
-      new_apint->isNegative = true;
-    } else if((a->isNegative) && (b->data[0] >= a->data[0])) { 
-      new_apint->data[0] = subVal(b->data[0], a->data[0]);
-      new_apint->isNegative = false;
+    ApInt * a_copy = (ApInt*)malloc(sizeof(ApInt));
+    a_copy->len = a->len;
+    a_copy->isNegative = a->isNegative;
+    a_copy->data = (uint64_t*)malloc(a->len*sizeof(uint64_t));
+    for(int i = 0; i < (int)a->len; i++) {
+      a_copy->data[i] = a->data[i];
     }
-    //when b is negative
-    //check which unsigned value is larger / or if they are equal
-    // subract values and set appropriate sign accordingly
-    else if((b->isNegative) && (b->data[0] > a->data[0])) {
-      new_apint->data[0] = subVal(b->data[0], a->data[0]);
-      new_apint->isNegative = true;
-    } else if((b->isNegative) && (a->data[0] >= b->data[0])) {
-      new_apint->data[0] = subVal(a->data[0], b->data[0]);
-      new_apint->isNegative = false;
+
+    ApInt * b_copy = (ApInt*)malloc(sizeof(ApInt));
+    b_copy->len = b->len;
+    b_copy->isNegative = b->isNegative;
+    b_copy->data = (uint64_t*)malloc(b->len*sizeof(uint64_t));
+    for(int i = 0; i < (int)b->len; i++) {
+      b_copy->data[i] = b->data[i];
     }
+    
+    if(a->isNegative) {
+      a_copy->isNegative = false;
+    } else if(b->isNegative) { 
+      b_copy->isNegative = false;
+    }
+
+    new_apint = apint_sub(a_copy, b_copy);
+    apint_destroy(temp);
   }
 
+  printf("here is sum new_apint at 0: %lu\n", new_apint->data[0]);
   return new_apint;
 }
 
@@ -258,49 +345,153 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
 int apint_compare(const ApInt *left, const ApInt *right) {
   //checks if both left and right instances are positive
   if( !(left->isNegative) && !(right->isNegative) ) {
-    //checks for larger value or equality and returns appropriate int
-    if(left->data[0] > right->data[0]) {
+    //checks for larger value using length first
+    if(left->len > right->len) {
       return 1;
     }
-    else if(left->data[0] < right->data[0]) {
+    else if(left->len < right->len) {
       return -1;
     }
-    else {
+    else { //if same length, iterate through data array to figure out which is bigger
+      for(int i = 0; i < (int)left->len; i++) {
+	if(left->data[i] > right->data[i]) {
+	  return 1;
+	}
+	else if (left->data[i] < right->data[i]) {
+	  return -1;
+	}
+      }
       return 0;
     }
   }
   //checks if both left and right instances are negative
   else if (left->isNegative && right->isNegative) {
     //in this case the superior unsigned value will result in the smaller ApInt instance
-    //checks value and returns appropriate int
-    if(left->data[0] > right->data[0]) {
-      return -1;
+    if( !(left->isNegative) && !(right->isNegative) ) {
+    //checks for larger value using length first
+      if(left->len > right->len) {
+	return -1;
+      }
+      else if(left->len < right->len) {
+	return 1;
+      }
+      else {
+      //if same length, iterate through data array to figure out which is bigger
+	for(int i = 0; i < (int)left->len; i++) {
+	  if(left->data[i] > right->data[i]) {
+	    return -1;
+	  }
+	  else if (left->data[i] < right->data[i]) {
+	    return 1;
+	  }
+	}
+	return 0;
+      }
     }
-    else if(left->data[0] < right->data[0]) {
-      return 1;
-    }
-    else {
-      return 0;
-    }
-  }
-  else { //if either left or right is negative,
-    //the negative value will always be the smaller
-    if(left->isNegative) {
-      return -1;
-    }
-    else {
-      return 1;
+    else { //if either left or right is negative,
+      //the negative value will always be the smaller
+      if(left->isNegative) {
+	return -1;
+      }
+      else {
+	return 1;
+      }
     }
   }
 }
-
 
 //helper functions
 uint64_t addVal(uint64_t a, uint64_t b) {
   return a + b;
 }
 
+void add_reorganize(ApInt* a) {
+  for(int i = a->len - 1; i >= 1; i--) {
+    a->data[i] = a->data[i-1]; //CHECK
+  }
+  a->data[0] = 0;
+}
 
 uint64_t subVal(uint64_t a, uint64_t b) {
   return a - b;
+}
+
+void sub_reorganize(ApInt* a) {
+  for(int i = 0; i < (int)a->len - 1; i++) {
+    a->data[i] = a->data[i+1];
+  }
+}
+
+char deci_to_hexi( uint64_t temp ) {
+  switch(temp) {
+  case 0 : return '0';
+    break;
+  case 1 : return'1';
+    break;
+  case 2 : return '2';
+    break;
+  case 3 : return '3';
+    break;
+  case 4 : return '4';
+    break;
+  case 5 : return '5';
+    break;
+  case 6 : return '6';
+    break;
+  case 7 : return '7';
+    break;
+  case 8 : return '8';
+    break;
+  case 9 : return '9';
+      break;
+  case 10 : return 'a';
+    break;
+  case 11 : return 'b';
+    break;
+  case 12 : return 'c';
+    break;
+  case 13 : return 'd';
+    break;
+  case 14 : return 'e';
+    break;
+  case 15 : return 'f';
+    break;
+    }
+}
+
+uint64_t hexi_to_deci(const char hex) {
+  switch(hex) {
+  case '0' : return 0;
+    break;
+  case '1' : return 1;
+    break;
+  case '2' : return 2;
+    break;
+  case '3' : return 3;
+    break;
+  case '4' : return 4;
+    break;
+  case '5' : return 5;
+    break;
+  case '6' : return 6;
+    break;
+  case '7' : return 7;
+    break;
+  case '8' : return 8;
+    break;
+  case '9' : return 9;
+      break;
+  case 'a' : return 10;
+    break;
+  case 'b' : return 11;
+    break;
+  case 'c' : return 12;
+    break;
+  case 'd' : return 13;
+    break;
+  case 'e' : return 14;
+    break;
+  case 'f' : return 15;
+    break;
+  }
 }
