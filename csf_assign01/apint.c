@@ -130,18 +130,18 @@ char *apint_format_as_hex(const ApInt *ap) {
   
   for(int j = ap->len - 1; j >= 0; j--) {
     uint64_t temp = ap->data[j];
-    int notDone = 0;
+    int appendZeros = 0;
     
-    if(temp == 0 && j != 1) {
-      notDone = 16;
+    if(temp == 0 && j != 0) {
+      appendZeros = 16;
     }
     
-    while ((temp != 0) || notDone >= 0){
+    while ((temp != 0) || appendZeros > 0){
       *(storep + idx) = deci_to_hexi(temp%16);
       idx++;
       temp = temp/16;
-      notDone--;
-      printf("gg\n")
+      appendZeros--;
+      printf("gg\n");
     }
   }
 
@@ -200,9 +200,10 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
 
   int r = small->len - 1; //index for smaller obj
 
-  if(a->isNegative && b->isNegative) { //cheks if both ApInts are negative
+  if((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //cheks if both ApInts are negative or if both are positive
     for( int i = large->len - 1; i >= 0; i--) {
-      if( i <= (int)small->len ) {
+      if( r >= 0 ) {
+	printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[r], large->data[i]);
 	new_apint->data[i] = addVal(large->data[i] + overflow, small->data[r]); // add unsigned values
 	r--;
       }
@@ -211,7 +212,7 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
       }
 
       overflow = 0;
-      if( (new_apint->data[i] <= small->data[i]) ||  (new_apint->data[i] <= large->data[i]) ) {
+      if( (new_apint->data[i] < small->data[i]) ||  (new_apint->data[i] < large->data[i]) ) {
 	overflow++;
       }
     }
@@ -219,12 +220,17 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
     if(overflow == 1) {
       new_apint->data = (uint64_t*)realloc(new_apint->data, large->len +1);
       add_reorganize(new_apint);
+      new_apint->len = large->len +1;
       new_apint->data[0] = new_apint->data[0] + overflow;
     }
-    
+    if (a->isNegative){
     new_apint->isNegative = true; // set appropriate sign for addition of two negative values
+    }
+    else {
+      new_apint->isNegative = false;
+    }
   }
-  else if(!(a->isNegative) && !(b->isNegative)) { //checks if both ApInts are positive
+  /* else if(!(a->isNegative) && !(b->isNegative)) { //checks if both ApInts are positive
     printf("entering both positive loop\n");
     for( int i = large->len - 1; i >= 0; i--) {
       printf("len is: %lu, and i is: %d\n", large->len, i);
@@ -259,7 +265,7 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
       new_apint->data[0] = new_apint->data[0] + overflow;
     }
     new_apint->isNegative = false; // set appropriate sign for addition of two positive values
-  }
+}*/
   else { // when either a or b is negative
     ApInt * temp = new_apint;
 
