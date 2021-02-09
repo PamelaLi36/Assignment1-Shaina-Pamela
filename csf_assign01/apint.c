@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 #include <assert.h>
 #include "apint.h"
 
@@ -285,14 +286,21 @@ ApInt *apint_add(const ApInt *a, const ApInt *b) {
       b_copy->data[i] = b->data[i];
     }
     
-    if(a->isNegative) {
+    if(a->isNegative) {// -a+b, b-a
       a_copy->isNegative = false;
-    } else if(b->isNegative) { 
+      new_apint = apint_sub(b_copy, a_copy);
+    } else if(b->isNegative) { //a-b  
       b_copy->isNegative = false;
+      new_apint = apint_sub(a_copy, b_copy);
     }
-
-    new_apint = apint_sub(a_copy, b_copy);
+    printf("This is a_copy->isNegative after change: %d\n", a_copy->isNegative);
+     printf("This is b_copy->isNegative after change: %d\n", b_copy->isNegative);
+     // new_apint = apint_sub(b_copy, a_copy);
+    printf("This is new_apint->isNegative:%d \n", new_apint->isNegative);
     apint_destroy(temp);
+    apint_destroy(a_copy);
+    apint_destroy(b_copy);
+    
   }
 
   printf("here is sum new_apint at 0: %lu\n", new_apint->data[0]);
@@ -306,8 +314,65 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
   new_apint->len = 1;
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
   new_apint->isNegative = false;
+  ApInt * small;
+  ApInt * large;
+  uint64_t borrow = 0;
 
-  if(!(a->isNegative) && !(b->isNegative)) {  //cheks if both ApInts are positive
+  if(apint_compare(a,b) == 1) {
+    small = b; 
+    large = a;
+  }
+  else if((apint_compare(a,b) == -1) || (apint_compare(a,b) == 0)) {
+    small = a;
+    large = b;
+    printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[0], large->data[0]);
+  }
+
+  new_apint->len = large->len;
+  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
+
+  int r = small->len - 1; //index for smaller obj
+
+  if((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //cheks if both ApInts are negative or if both are positive
+    for( int i = large->len - 1; i >= 0; i--) {
+      if ( borrow == 1){//decrement the current index if in the previous index, it was borrowed from
+	large->data[i]-= i;
+	  borrow = 0;
+      }
+      if(large->data[i] < small->data[r]){
+	borrow++;
+      }
+      if( r >= 0 ) {
+	printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[r], large->data[i]);
+	printf("This is borrow * pow(2,63): %lu; and borrow = %lu\n",(borrow * pow(2,63)),borrow); 
+	new_apint->data[i] = subVal(large->data[i], small->data[r]); // add unsigned values
+	printf("This is new_apt before borrow:%lu\n",	new_apint->data[i] );
+	//new_apint->data[i] = subVal((borrow * (uint64_t)pow(2,63)), new_apint->data[i]);//find a way to incorporate borrowing
+		printf("This is new_apt after borrow:%lu\n",new_apint->data[i] );
+	r--;
+      }
+      else {
+	new_apint->data[i] = large->data[i] - borrow;
+      }
+    }
+    if ( large->data[0] == 0){
+      sub_reorganize(new_apint);
+      new_apint->data = (uint64_t* ) realloc(new_apint->data, large->len-1);
+      new_apint->len = large->len-1;
+    }
+    if((large->isNegative) || (apint_compare(b, a) == 1)){
+	new_apint->isNegative = true;
+      }
+      else{
+	new_apint->isNegative = false;
+      }
+    /*printf("This is new_apint returned: ");
+      for(int i = new_apint->len-1; i >= 0; i--){
+	printf("%ul", new_apint->data[i]);
+      }
+      printf("\n");*/
+	}
+  /* if(!(a->isNegative) && !(b->isNegative)) {  //cheks if both ApInts are positive
     //check with unsigned value is larger / equal to
     //depending on that subtract values in correct order
     //set appropriate sign 
@@ -330,22 +395,43 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
       new_apint->data[0] = subVal(b->data[0], a->data[0]);
       new_apint->isNegative = false;
     }
-  }
+    }*/
   else {  //cheks if either a or b is  negative
     //if one value is negative, then we know result will be an addition anyway
-    new_apint->data[0] = addVal(a->data[0], b->data[0]);
-
-    //in a - b if a is negative then the answer will be negative
-    // if b is negative, then the answer will be positive
-    if(a->isNegative) {
-      new_apint->isNegative = true;
+    ApInt * temp = new_apint;
+    ApInt * a_copy = (ApInt*)malloc(sizeof(ApInt));
+    a_copy->len = a->len;
+    a_copy->isNegative = a->isNegative;
+    a_copy->data = (uint64_t*)malloc(a->len*sizeof(uint64_t));
+    for(int i = 0; i < (int)a->len; i++) {
+      a_copy->data[i] = a->data[i];
     }
-    else {
-      new_apint->isNegative = false;
+    ApInt * b_copy = (ApInt*)malloc(sizeof(ApInt));
+    b_copy->len = b->len;
+    b_copy->isNegative = b->isNegative;
+    b_copy->data = (uint64_t*)malloc(b->len*sizeof(uint64_t));
+    for(int i = 0; i < (int)b->len; i++) {
+      b_copy->data[i] = b->data[i];
     }
+    
+    if(b->isNegative) {
+      b_copy->isNegative = false;
+    } else { 
+      b_copy->isNegative = true;
+    }
+    
+    new_apint = apint_add(a_copy, b_copy);
+    apint_destroy(temp);
+    apint_destroy(a_copy);
+    apint_destroy(b_copy);
+    
   }
-
-  return new_apint;
+  printf("This is new_apint returned: ");
+  for(int i = new_apint->len-1; i >= 0; i--){
+    printf("%lu", new_apint->data[i]);
+  }
+  printf("\n");
+return new_apint;
 }
 
 int apint_compare(const ApInt *left, const ApInt *right) {

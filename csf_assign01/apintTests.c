@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 	TEST(testCompare);
 	TEST(testFormatAsHex);
 	TEST(testAdd);
-	//TEST(testSub);
+	TEST(testSub);
 	/* TODO: use TEST macro to execute more test functions */
 
 	TEST_FINI();
@@ -147,12 +147,11 @@ void testAdd(TestObjs *objs) {
 	apint_destroy(sum);
 	free(s);
 	
-	/* -1 + 0 = -1 
+	/* -1 + 0 = -1 */
 	sum = apint_add(objs->minus1, objs->ap0);
 	ASSERT(0 == strcmp("-1", (s = apint_format_as_hex(sum))));
 	apint_destroy(sum);
 	free(s);
-	*/
 
 	/* 1 + 1 = 2 */
 	sum = apint_add(objs->ap1, objs->ap1);
@@ -178,7 +177,7 @@ void testAdd(TestObjs *objs) {
 	apint_destroy(sum);
 	free(s);
 
-	/*
+	/*      
 	sum = apint_add(objs->max1, objs->ap1);
 	ASSERT(0 == strcmp("10000000000000000", (s = apint_format_as_hex(sum))));
 	apint_destroy(sum);
