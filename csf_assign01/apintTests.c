@@ -27,7 +27,12 @@ typedef struct {
 	ApInt *ap110660361;
 	ApInt *max1;
 	ApInt *minus1;
-	/* TODO: add additional fields of test fixture */
+        ApInt *test1;
+        ApInt *test2;
+        ApInt *test3;
+  
+  
+  /* TODO: add additional fields of test fixture */
 } TestObjs;
 
 TestObjs *setup(void);
@@ -39,6 +44,7 @@ void testCompare(TestObjs *objs);
 void testFormatAsHex(TestObjs *objs);
 void testAdd(TestObjs *objs);
 void testSub(TestObjs *objs);
+void testCreateFromHex(TestObjs *objs);
 /* TODO: add more test function prototypes */
 
 int main(int argc, char **argv) {
@@ -57,7 +63,8 @@ int main(int argc, char **argv) {
 	TEST(testCompare);
 	TEST(testFormatAsHex);
 	TEST(testAdd);
-	TEST(testSub);
+	//TEST(testSub);
+	TEST(testCreateFromHex);
 	/* TODO: use TEST macro to execute more test functions */
 
 	TEST_FINI();
@@ -176,12 +183,6 @@ void testAdd(TestObjs *objs) {
 	ASSERT(0 == strcmp("10000000000000000", (s = apint_format_as_hex(sum))));
 	apint_destroy(sum);
 	free(s);
-
-	/*      
-	sum = apint_add(objs->max1, objs->ap1);
-	ASSERT(0 == strcmp("10000000000000000", (s = apint_format_as_hex(sum))));
-	apint_destroy(sum);
-	free(s);*/
 }
 
 void testSub(TestObjs *objs) {
@@ -216,7 +217,7 @@ void testSub(TestObjs *objs) {
 	free(s);
 
 	/* test involving larger values */
-	/*a = apint_create_from_hex("7e35207519b6b06429378631ca460905c19537644f31dc50114e9dc90bb4e4ebc43cfebe6b86d");
+	a = apint_create_from_hex("7e35207519b6b06429378631ca460905c19537644f31dc50114e9dc90bb4e4ebc43cfebe6b86d");
 	b = apint_create_from_hex("9fa0fb165441ade7cb8b17c3ab3653465e09e8078e09631ec8f6fe3a5b301dc");
 	diff = apint_sub(a, b);
 	ASSERT(0 == strcmp("7e35207519b6afc4883c6fdd8898213a367d73b918de95f20766963b0251c622cd3ec4633b691",
@@ -224,7 +225,7 @@ void testSub(TestObjs *objs) {
 	apint_destroy(diff);
 	apint_destroy(b);
 	apint_destroy(a);
-	free(s); */
+	free(s); 
 
 	/* test involving larger values (with a negative difference) */
 	/*a = apint_create_from_hex("9fa0fb165441ade7cb8b17c3ab3653465e09e8078e09631ec8f6fe3a5b301dc");
@@ -239,3 +240,11 @@ void testSub(TestObjs *objs) {
 }
 
 /* TODO: add more test functions */
+
+void testCreateFromHex(TestObjs *objs) {
+  ApInt *result;
+  char *s;
+  /*test 1*/
+  result = apint_create_from_hex("fffffffffffffff");
+  ASSERT(0 == strcmp("1152921504606846975", (s = apint_format_as_hex(result))));
+}

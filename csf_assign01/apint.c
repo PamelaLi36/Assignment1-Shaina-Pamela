@@ -30,35 +30,79 @@ ApInt *apint_create_from_u64(uint64_t val) {
 }
 
 ApInt *apint_create_from_hex(const char *hex) {
+  printf("\ncreating from hex!\nhere is your hex string: %s\n", hex);
+  
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
   new_apint->len = 1;
 
   int hasMinus = 0;
   new_apint->isNegative = false;
   if((strlen(hex) > 16) && (hex[0] != '-')) {
+    printf("this is a large value. strlen(hex) is: %d, adding length\n", strlen(hex));
     new_apint->len += strlen(hex)/16;
+    printf("len is %d\n", new_apint->len);
   }
+  
   else if (hex[0] == '-') {
+    printf("this is a negative hex value\n");
+    new_apint->len += (strlen(hex) - 1)/16;
     new_apint->isNegative = true;
     hasMinus = 1;
   }
 
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
-  int r = new_apint->len - 1;
+  int r = new_apint->len; //-1 5
   int position = 0;
   uint64_t sum = 0;
 
-  for (int i = strlen(hex)-1; i >= 0 + hasMinus; i--) {
-    if(i/16 > 0) { //overflow
+  int i = strlen(hex)-1; //76
+
+  while(r >= 0) {
+    printf("this is r: %d\n", r);
+    //i = 76 and r*16 = 80; r*16 - 16: 
+    while((i > (r*16 - 16)) && (i >= hasMinus)) {
+      sum += hexi_to_deci(hex[i]) * pow(16,position);
+      i--;
+      position++;
+    }
+    printf("the value in new_apint->d[r] is %lu\n", sum);
+    new_apint->data[r] = sum;
+      
+    //reset
+    position = 0;
+    sum = 0;
+    r--;
+  } 
+  
+  /*for (int i = strlen(hex)-1; i >= 0 + hasMinus; i--) {
+    printf("here is hex(i): %c\n", hex[i]);
+ 
+    //TEST
+    if(i/16 > 0) {
+      printf("this is r: %d\n", r);
+      while(i > (r*16 - 16)) {
+	sum += hexi_to_deci(hex[i]) * 16(position);
+	i--;
+      }
+      printf("the value in new_apint->d[r] is %lu\n", sum);
       new_apint->data[r] = sum;
+      
+      //reset
       sum = 0;
       position = 0;
       r--;
-    }
-    sum = hexi_to_deci(hex[i]) * 16^(position);
-    position++;
-  }
+    } // might need to fix i
+
+    if(i/16 == 0){
+      sum += hexi_to_deci(hex[i]) * 16^(position); //+=
+      position++;
+    } 
     
+  } */
+
+  
+  //new_apint->data[0] = sum; //?
+      
   return new_apint;
 }
 
@@ -318,6 +362,7 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
   ApInt * large;
   uint64_t borrow = 0;
 
+  printf("\nxoming in, this is a: %lu, and b: %lu\n", a->data[0], b->data[0]);
   if(apint_compare(a,b) == 1) {
     small = b; 
     large = a;
@@ -325,6 +370,7 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
   else if((apint_compare(a,b) == -1) || (apint_compare(a,b) == 0)) {
     small = a;
     large = b;
+    printf("this is a: %lu, and b: %lu\n", a->data[0], b->data[0]);
     printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[0], large->data[0]);
   }
 
@@ -342,6 +388,7 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
       if(large->data[i] < small->data[r]){
 	borrow++;
       }
+      
       if( r >= 0 ) {
 	printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[r], large->data[i]);
 	printf("This is borrow * pow(2,63): %lu; and borrow = %lu\n",(borrow * pow(2,63)),borrow); 
@@ -435,6 +482,9 @@ return new_apint;
 }
 
 int apint_compare(const ApInt *left, const ApInt *right) {
+
+  printf("here is left data: %lu, and right d: %lu\n", left->data[0], right->data[0]);
+  
   //checks if both left and right instances are positive
   if( !(left->isNegative) && !(right->isNegative) ) {
     //checks for larger value using length first
@@ -459,35 +509,34 @@ int apint_compare(const ApInt *left, const ApInt *right) {
   //checks if both left and right instances are negative
   else if (left->isNegative && right->isNegative) {
     //in this case the superior unsigned value will result in the smaller ApInt instance
-    if( !(left->isNegative) && !(right->isNegative) ) {
+    printf("they are both negative\n");
     //checks for larger value using length first
-      if(left->len > right->len) {
-	return -1;
-      }
-      else if(left->len < right->len) {
-	return 1;
-      }
-      else {
-      //if same length, iterate through data array to figure out which is bigger
-	for(int i = 0; i < (int)left->len; i++) {
-	  if(left->data[i] > right->data[i]) {
-	    return -1;
-	  }
-	  else if (left->data[i] < right->data[i]) {
-	    return 1;
-	  }
-	}
-	return 0;
-      }
+    if(left->len > right->len) {
+      return -1;
     }
-    else { //if either left or right is negative,
-      //the negative value will always be the smaller
-      if(left->isNegative) {
-	return -1;
-      }
-      else {
+    else if(left->len < right->len) {
 	return 1;
+    }
+    else {
+      //if same length, iterate through data array to figure out which is bigger
+      for(int i = 0; i < (int)left->len; i++) {
+	if(left->data[i] > right->data[i]) {
+	  return -1;
+	  }
+	else if (left->data[i] < right->data[i]) {
+	  return 1;
+	}
       }
+      return 0;
+    }
+  }
+  else { //if either left or right is negative,
+      //the negative value will always be the smaller
+    if(left->isNegative) {
+      return -1;
+    }
+    else {
+      return 1;
     }
   }
 }
