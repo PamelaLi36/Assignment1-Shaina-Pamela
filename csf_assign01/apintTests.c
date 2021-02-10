@@ -244,11 +244,32 @@ void testSub(TestObjs *objs) {
 void testCreateFromHex(TestObjs *objs) {
   ApInt *result;
   char *s;
-  /*test 1
-  result = apint_create_from_hex("fffffffffffffff");
-  ASSERT(0 == strcmp("1152921504606846975", s = apint_format_as_hex(result)));*/
 
-  /*test 2*/
-  result = apint_create_from_hex("7e56bc3456781034dd");
-  ASSERT(0 == strcmp("2330539681216273069277", s = apint_format_as_hex(result)));
+  /*test 1 small value: create 1 from 1*/
+  result = apint_create_from_hex("1");
+  ASSERT(1 == result->data[0]);
+
+  /*test 2 small value: create 267 from 10b*/
+  result = apint_create_from_hex("10b");
+  ASSERT(267 == result->data[0]);
+  apint_destroy(result);
+  free(s); // ??
+  
+   /*test 3 value: create 17552470 from 10bd456*/
+  result = apint_create_from_hex("10bd456");
+  ASSERT(17552470 == result->data[0]);
+  apint_destroy(result);
+  free(s); //?
+
+  /* test 4  case fffffffffffffff (15fs) */
+  result= apint_create_from_hex("fffffffffffffff");
+  ASSERT(0 == strcmp("1000000000000000", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+
+   /* test 4  case ffffffffffffffff (16fs) */
+  result= apint_create_from_hex("ffffffffffffffff");
+  ASSERT(0 == strcmp("ffffffffffffffff", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
 }
