@@ -244,7 +244,11 @@ void testSub(TestObjs *objs) {
 void testCreateFromHex(TestObjs *objs) {
   ApInt *result;
   char *s;
-  /*test 1*/
+  /*test 1
   result = apint_create_from_hex("fffffffffffffff");
-  ASSERT(0 == strcmp("1152921504606846975", (s = apint_format_as_hex(result))));
+  ASSERT(0 == strcmp("1152921504606846975", s = apint_format_as_hex(result)));*/
+
+  /*test 2*/
+  result = apint_create_from_hex("7e56bc3456781034dd");
+  ASSERT(0 == strcmp("2330539681216273069277", s = apint_format_as_hex(result)));
 }
