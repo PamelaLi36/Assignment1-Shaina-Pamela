@@ -186,271 +186,83 @@ ApInt *apint_negate(const ApInt *ap) {
   } else {
     new_apint->isNegative = true;
   }
-
+  
   return new_apint;
 }
 
 ApInt *apint_add(const ApInt *a, const ApInt *b) {
-
-  //creates new Apint instance to return
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
-  ApInt * small;
-  ApInt * large;
-  uint64_t overflow = 0;
-
-  if(apint_compare(a,b) == 1) {
-    small = b; 
-    large = a;
+  new_apint->data = NULL;
+  ApInt * new_a = apint_negate(a);
+  ApInt * new_b = apint_negate(b);
+  printf("Entered apint_add\n");
+  if ((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //-a-b  ;  a+b
+    new_apint->data = unsigned_add(a, b);
+     printf("Got passed unisigned add in apint_add\n");
+    new_apint->isNegative = a->isNegative;
   }
-  else if((apint_compare(a,b) == -1) || (apint_compare(a,b) == 0)) {
-    small = a;
-    large = b;
-    printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[0], large->data[0]);
-  }
-
-  new_apint->len = large->len;
-  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
-
-  int r = small->len - 1; //index for smaller obj
-
-  if((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //cheks if both ApInts are negative or if both are positive
-    for( int i = large->len - 1; i >= 0; i--) {
-      if( r >= 0 ) {
-	printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[r], large->data[i]);
-	new_apint->data[i] = addVal(large->data[i] + overflow, small->data[r]); // add unsigned values
-	r--;
-      }
-      else {
-	new_apint->data[i] = large->data[i] + overflow;
-      }
-
-      overflow = 0;
-      if( (new_apint->data[i] < small->data[i]) ||  (new_apint->data[i] < large->data[i]) ) {
-	overflow++;
-      }
+  else {   // -a + b or a - b -> a - b  or b-a
+    new_apint->data = unsigned_sub(new_a,  new_b);
+    if ((apint_compare(new_a,new_b) == 1)) { // if the magnitude of a is bigger than b  
+      new_apint->isNegative = a->isNegative;
+    }else{
+      new_apint->isNegative = b->isNegative;
     }
-
-    if(overflow == 1) {
-      new_apint->data = (uint64_t*)realloc(new_apint->data, large->len +1);
-      add_reorganize(new_apint);
-      new_apint->len = large->len +1;
-      new_apint->data[0] = new_apint->data[0] + overflow;
-    }
-    if (a->isNegative){
-    new_apint->isNegative = true; // set appropriate sign for addition of two negative values
-    }
-    else {
-      new_apint->isNegative = false;
+    if (apint_is_zero(new_apint)){
+      new_apint->isNegative = true;
     }
   }
-  /* else if(!(a->isNegative) && !(b->isNegative)) { //checks if both ApInts are positive
-    printf("entering both positive loop\n");
-    for( int i = large->len - 1; i >= 0; i--) {
-      printf("len is: %lu, and i is: %d\n", large->len, i);
-      if(r >= 0) {
-	printf("large data is: %lu, and small data is: %lu\n", large->data[i], small->data[r]);
-	new_apint->data[i] = addVal(large->data[i] + overflow, small->data[r]);
-	printf("overflow: %d\n", overflow);
-	printf("when r = 0, new_apint->data[i] after adding is: %lu\n", new_apint->data[i]);
-	r--;
-      }
-      else {
-	new_apint->data[i] = small->data[i] + overflow;
-      }
-
-      overflow = 0;
-      if ((new_apint->data[i] < small->data[i]) || (new_apint->data[i] < large->data[i])) {
-	overflow++;
-      }
-    }
-
-    if(overflow == 1) {
-      printf("there is overflow\n");
-      new_apint->data = (uint64_t*)realloc(new_apint->data, large->len + 1);
-      new_apint->len = large->len + 1;
-      add_reorganize(new_apint);
-      
-      printf("\nreorganized array\n");
-      for(int i = 0; i < large->len + 1; i++) {
-	printf("%lu\n", new_apint->data[i]);
-      }
-      
-      new_apint->data[0] = new_apint->data[0] + overflow;
-    }
-    new_apint->isNegative = false; // set appropriate sign for addition of two positive values
-}*/
-  else { // when either a or b is negative
-    ApInt * temp = new_apint;
-
-    ApInt * a_copy = (ApInt*)malloc(sizeof(ApInt));
-    a_copy->len = a->len;
-    a_copy->isNegative = a->isNegative;
-    a_copy->data = (uint64_t*)malloc(a->len*sizeof(uint64_t));
-    for(int i = 0; i < (int)a->len; i++) {
-      a_copy->data[i] = a->data[i];
-    }
-
-    ApInt * b_copy = (ApInt*)malloc(sizeof(ApInt));
-    b_copy->len = b->len;
-    b_copy->isNegative = b->isNegative;
-    b_copy->data = (uint64_t*)malloc(b->len*sizeof(uint64_t));
-    for(int i = 0; i < (int)b->len; i++) {
-      b_copy->data[i] = b->data[i];
-    }
-    
-    if(a->isNegative) {// -a+b, b-a
-      a_copy->isNegative = false;
-      new_apint = apint_sub(b_copy, a_copy);
-    } else if(b->isNegative) { //a-b  
-      b_copy->isNegative = false;
-      new_apint = apint_sub(a_copy, b_copy);
-    }
-    printf("This is a_copy->isNegative after change: %d\n", a_copy->isNegative);
-     printf("This is b_copy->isNegative after change: %d\n", b_copy->isNegative);
-     // new_apint = apint_sub(b_copy, a_copy);
-    printf("This is new_apint->isNegative:%d \n", new_apint->isNegative);
-    apint_destroy(temp);
-    apint_destroy(a_copy);
-    apint_destroy(b_copy);
-    
-  }
-
-  printf("here is sum new_apint at 0: %lu\n", new_apint->data[0]);
-  return new_apint;
+  apint_destroy(new_a);
+  apint_destroy(new_b);
+  new_apint->len = (sizeof(new_apint->data))/(sizeof(new_apint->data[0]));
+  printf("This is sizeof new_apint->data: %lu\n", sizeof(new_apint->data));
+   printf("This is sizeof uint64_t: %lu\n", sizeof(uint64_t));
+  
+  printf("This is len of new_apint: %lu\n", new_apint->len);
+  
+  //printf("This is new_apint[0]: %lu\n", new_apint->data[0]);
+  //if ( new_apint->len > 1){
+  //   printf("This is new_apint[1]: %lu\n", new_apint->data[1]);
+   //}
+   printf("This is new_apint: \n");
+     for (int j = 0; j < new_apint->len; j++){
+       printf("%lu ", new_apint->data[j]);
+     }
+   return new_apint;
 }
 
-
+	
 ApInt *apint_sub(const ApInt *a, const ApInt *b) {
-   //creates new Apint instance to return
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
-  new_apint->len = 1;
-  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
-  new_apint->isNegative = false;
-  ApInt * small;
-  ApInt * large;
-  uint64_t borrow = 0;
-
-  printf("\nxoming in, this is a: %lu, and b: %lu\n", a->data[0], b->data[0]);
-  if(apint_compare(a,b) == 1) {
-    small = b; 
-    large = a;
-  }
-  else if((apint_compare(a,b) == -1) || (apint_compare(a,b) == 0)) {
-    small = a;
-    large = b;
-    printf("this is a: %lu, and b: %lu\n", a->data[0], b->data[0]);
-    printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[0], large->data[0]);
-  }
-
-  new_apint->len = large->len;
-  new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
-
-  int r = small->len - 1; //index for smaller obj
-
-  if((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //cheks if both ApInts are negative or if both are positive
-    for( int i = large->len - 1; i >= 0; i--) {
-      if ( borrow == 1){//decrement the current index if in the previous index, it was borrowed from
-	large->data[i]-= i;
-	  borrow = 0;
-      }
-      if(large->data[i] < small->data[r]){
-	borrow++;
-      }
-      
-      if( r >= 0 ) {
-	printf("here is small data(a) = %lu, and big(b): %lu\n", small->data[r], large->data[i]);
-	printf("This is borrow * pow(2,63): %lu; and borrow = %lu\n",(borrow * pow(2,63)),borrow); 
-	new_apint->data[i] = subVal(large->data[i], small->data[r]); // add unsigned values
-	printf("This is new_apt before borrow:%lu\n",	new_apint->data[i] );
-	//new_apint->data[i] = subVal((borrow * (uint64_t)pow(2,63)), new_apint->data[i]);//find a way to incorporate borrowing
-		printf("This is new_apt after borrow:%lu\n",new_apint->data[i] );
-	r--;
-      }
-      else {
-	new_apint->data[i] = large->data[i] - borrow;
-      }
+  ApInt * new_a = apint_negate(a);
+  ApInt * new_b = apint_negate(b);
+  
+  if((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //-a + b  , a - b ,  b- a, -b - (-a)
+    unsigned_sub(new_a, new_b);
+    if ( apint_compare(new_a, new_b) == 1 ){
+      new_apint->isNegative = a->isNegative;
     }
-    if ( large->data[0] == 0){
-      sub_reorganize(new_apint);
-      new_apint->data = (uint64_t* ) realloc(new_apint->data, large->len-1);
-      new_apint->len = large->len-1;
-    }
-    if((large->isNegative) || (apint_compare(b, a) == 1)){
-	new_apint->isNegative = true;
-      }
-      else{
-	new_apint->isNegative = false;
-      }
-    /*printf("This is new_apint returned: ");
-      for(int i = new_apint->len-1; i >= 0; i--){
-	printf("%ul", new_apint->data[i]);
-      }
-      printf("\n");*/
-	}
-  /* if(!(a->isNegative) && !(b->isNegative)) {  //cheks if both ApInts are positive
-    //check with unsigned value is larger / equal to
-    //depending on that subtract values in correct order
-    //set appropriate sign 
-    if(a->data[0] >= b->data[0] ) {
-      new_apint->data[0] = subVal(a->data[0], b->data[0]);
-      new_apint->isNegative = false;
-    } else {
-      new_apint->data[0] = subVal(b->data[0], a->data[0]);
-      new_apint->isNegative = true;
-    }
-  }
-  else if(a->isNegative && b->isNegative) {  //cheks if both ApInts are negative
-    //check with unsigned value is larger / equal to
-    //depending on that subtract values in correct order
-    //set appropriate sign
-    if(a->data[0] > b->data[0] ) {
-      new_apint->data[0] = subVal(a->data[0], b->data[0]);
-      new_apint->isNegative = true;
-    } else {
-      new_apint->data[0] = subVal(b->data[0], a->data[0]);
+    else if ( apint_compare( new_b, new_a ) == 1 ){ //b has a smaller magnitude than a
+      new_apint->isNegative = a->isNegative;
+    }else { // if answer is 0
       new_apint->isNegative = false;
     }
-    }*/
-  else {  //cheks if either a or b is  negative
-    //if one value is negative, then we know result will be an addition anyway
-    ApInt * temp = new_apint;
-    ApInt * a_copy = (ApInt*)malloc(sizeof(ApInt));
-    a_copy->len = a->len;
-    a_copy->isNegative = a->isNegative;
-    a_copy->data = (uint64_t*)malloc(a->len*sizeof(uint64_t));
-    for(int i = 0; i < (int)a->len; i++) {
-      a_copy->data[i] = a->data[i];
-    }
-    ApInt * b_copy = (ApInt*)malloc(sizeof(ApInt));
-    b_copy->len = b->len;
-    b_copy->isNegative = b->isNegative;
-    b_copy->data = (uint64_t*)malloc(b->len*sizeof(uint64_t));
-    for(int i = 0; i < (int)b->len; i++) {
-      b_copy->data[i] = b->data[i];
-    }
-    
-    if(b->isNegative) {
-      b_copy->isNegative = false;
-    } else { 
-      b_copy->isNegative = true;
-    }
-    
-    new_apint = apint_add(a_copy, b_copy);
-    apint_destroy(temp);
-    apint_destroy(a_copy);
-    apint_destroy(b_copy);
     
   }
-  printf("This is new_apint returned: ");
-  for(int i = new_apint->len-1; i >= 0; i--){
-    printf("%lu", new_apint->data[i]);
+  else {
+    unsigned_add(new_a, new_b); // a - (-b)   -a -b 
+    new_apint->isNegative = a->isNegative;
   }
-  printf("\n");
-return new_apint;
+  new_apint->len = sizeof(new_apint->data)/sizeof(uint64_t);
+  printf("After subtracting, this is the length of new_apint: %lu\n",  new_apint->len ); 
+  apint_destroy(new_a);
+  apint_destroy(new_b);
+  printf("Returned from ap sub with data = %lu\n", new_apint->data[0]);
+  return  new_apint;
 }
 
 int apint_compare(const ApInt *left, const ApInt *right) {
-
+  
   printf("here is left data: %lu, and right d: %lu\n", left->data[0], right->data[0]);
   
   //checks if both left and right instances are positive
@@ -510,25 +322,155 @@ int apint_compare(const ApInt *left, const ApInt *right) {
 }
 
 //helper functions
-uint64_t addVal(uint64_t a, uint64_t b) {
-  return a + b;
-}
+uint64_t * unsigned_add(ApInt *a, ApInt *b) {
+  ApInt* temp = (ApInt*)malloc( 1 *sizeof(ApInt));
+  ApInt* other = NULL;
+  uint64_t overflow = 0;
 
-void add_reorganize(ApInt* a) {
-  for(int i = a->len - 1; i >= 1; i--) {
-    a->data[i] = a->data[i-1]; //CHECK
+   printf("Entered unsigned_add\n");
+  if ( a->len < b->len ) {
+      temp->data = add_padding(a->data, a->len, b->len);
+      temp->len = b->len;
+      other = b; 
   }
-  a->data[0] = 0;
-}
-
-uint64_t subVal(uint64_t a, uint64_t b) {
-  return a - b;
-}
-
-void sub_reorganize(ApInt* a) {
-  for(int i = 0; i < (int)a->len - 1; i++) {
-    a->data[i] = a->data[i+1];
+  else { //this includes if they have teh same length 
+    temp->data = add_padding(b->data, b->len, a->len);
+    temp->len = a->len;
+    other = a;
   }
+  
+  printf("This is temp->len and other->len: %lu and %lu\n", temp->len, other->len);
+  uint64_t* new_data = (uint64_t*)malloc( (temp->len) *sizeof(uint64_t));
+  
+  for ( int i = temp->len-1; i >= 0; i--){
+    new_data[i] = other->data[i] + temp->data[i] + overflow;
+    overflow = 0;
+    if((new_data[i] < temp->data[i]) ||  (new_data[i] < other->data[i]) ) {
+      overflow++;
+    }	
+  }
+  
+  if (overflow == 1) {
+    uint64_t* temp2 = new_data;
+    new_data = add_padding(new_data, other->len, (other->len + 1));
+    new_data[0] = 1ul;
+    printf("In overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data[0],  new_data[1]);
+    apint_destroy(temp2); 
+  }
+  apint_destroy(temp);
+  //apint_destroy(temp2);
+  // printf("Return from unsigned_add with: %lu + %lu = %lu\n", a->data[0], b->data[0],new_data[0]);    
+ printf("Outside of overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data[0],  new_data[1]);
+  return new_data;
+}
+
+
+uint64_t * unsigned_sub(ApInt *a, ApInt *b) { //just need the magnitude
+  ApInt* temp = (ApInt*)malloc( 1 *sizeof(ApInt)); //has the smaller number
+  ApInt* other = NULL; //other is the bigger number
+  uint64_t borrow = 0; 
+  //boolean isGreater; //temp is greater 
+   printf("Now in unsigned_sub\n");
+  if ( a->len < b->len ) {
+	  temp->data = add_padding(a->data, a->len, b->len);
+       	 temp->len = b->len;
+       	 other = b;
+    	}
+    	else {
+	  temp->data = add_padding(b->data, b->len, a->len);
+	  temp->len = a->len;
+	  other = a;
+	}
+  printf("This is temp->len and other->len: %lu and %lu\n", temp->len, other->len);
+  uint64_t* new_data = (uint64_t*)malloc((temp->len) *sizeof(uint64_t));
+  for( int i = temp->len -1; i >= 0; i--){
+    printf("Current vals: temp[i] = %lu and other[i] = %lu\n",temp->data[i],temp->data[i] );
+    if ((borrow > 1) && other->data[i] != 0){ //checking if you need to borrow
+      printf("Need to borrow from next index\n");
+      other->data[i] -= borrow;
+      borrow = 0; 
+    }
+    if ( other->data[i] < temp->data[i]){
+      borrow += 1u;
+    }
+    if ( temp->data[i] > other->data[i]) { // getting the magnitude 
+      new_data[i] = temp->data[i] - other->data[i];
+      printf("Now subtracting %lu - %lu = %lu\n", temp->data[i],other->data[i],  new_data[i]);
+    }else {
+      new_data[i] = other->data[i] - temp->data[i];
+      printf("Now subtracting %lu - %lu = %lu\n",other->data[i],temp->data[i],  new_data[i]);
+    } 
+    
+    if ((borrow > 0) && (other->data[i] == 0)){ //when its 0 
+      new_data[i] = ((2ul << 63) - 1) - new_data[i];
+      borrow--;
+      printf("After borrow: %lu\n", new_data[i]);
+    }
+    else if ( borrow > 0) { 
+      new_data[i] = ((2ul << 63) - 1) - new_data[i];
+      new_data[i] = new_data[i] -1;
+    }
+  } //end of for loop 
+  if ( new_data[0] == 0){
+    uint64_t* temp2 = new_data;
+    new_data = rem_padding( new_data, temp->len);
+    apint_destroy(temp2); 
+  }
+  apint_destroy(temp);
+  //apint_destroy(temp2);   
+  //printf("Now in unsigned_sub: %lu - %lu = %lu\n", a->data[0], b->data[0],new_data[0]);
+  printf("Returning from unsigned_sub: \n");
+  
+  for ( int j = 0; j <(sizeof(new_data)/sizeof(uint64_t))-1; j++){
+    printf("%lu ", new_data[j]);
+  }
+  return new_data;    
+}
+
+uint64_t* add_padding(uint64_t * a, uint32_t curr_len, uint32_t new_len){
+  uint64_t* temp = (uint64_t*)malloc((new_len) *sizeof(uint64_t));
+  int r = new_len - 1; //data storage for the new data
+   printf("Entered add_padding\n");
+  
+  for ( int i = curr_len -1; i >= 0 ; i--){
+    temp[r] = a[i];
+    printf("temp[%d] = %lu\n", r,  temp[r]);
+    r--;
+  }
+  for ( ; r >= 0; r--){
+    printf("Padding: Adds 0\n");
+    temp[r] = 0ul;
+    printf("temp[%d] = %lu\n", r,  temp[r]);
+  }
+   printf("This is after padding: \n");
+   for (int j = 0; j < new_len-1; j++){
+     printf("%lu ", temp[j]);
+   }
+   
+   return temp;
+}
+
+uint64_t* rem_padding(uint64_t * a, uint32_t curr_len){
+  int num2remove = 0; //how many indices to remove
+  int idx = 0;
+   printf("Entering remove padding: \n");
+  while (a[idx] == 0) {
+    num2remove++;
+    idx++;
+  }
+  uint64_t* temp = (uint64_t*)malloc((curr_len - num2remove) *sizeof(uint64_t));
+  int r = num2remove; // 000 000 100 va = 2
+   printf("Entered rem_padding\n");
+  for ( int i = 0; i < (curr_len - num2remove); i++){
+    temp[i] = a[r];
+    r++;
+  }
+   printf("This is after remove  padding: \n");
+   for (int j = 0; j < (curr_len - num2remove); j++){
+     printf("%lu ", temp[j]);
+   }
+   
+   return temp;
 }
 
 char deci_to_hexi( uint64_t temp ) {
