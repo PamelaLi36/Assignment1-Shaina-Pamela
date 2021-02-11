@@ -243,33 +243,90 @@ void testSub(TestObjs *objs) {
 
 void testCreateFromHex(TestObjs *objs) {
   ApInt *result;
-  char *s;
+  char *s, *s1;
 
+  /*test 0 */
+  result = apint_create_from_hex("0");
+  ASSERT(0 == strcmp((s1 = apint_format_as_hex(result)), (s = apint_format_as_hex(objs->ap0))));
+  apint_destroy(result);
+  free(s);
+  free(s1);
+  
   /*test 1 small value: create 1 from 1*/
   result = apint_create_from_hex("1");
   ASSERT(1 == result->data[0]);
-
+  apint_destroy(result);
+  
   /*test 2 small value: create 267 from 10b*/
   result = apint_create_from_hex("10b");
   ASSERT(267 == result->data[0]);
   apint_destroy(result);
-  free(s); // ??
   
-   /*test 3 value: create 17552470 from 10bd456*/
+  /*test 3 value: create 17552470 from 10bd456*/
   result = apint_create_from_hex("10bd456");
   ASSERT(17552470 == result->data[0]);
   apint_destroy(result);
-  free(s); //?
 
   /* test 4  case fffffffffffffff (15fs) */
   result= apint_create_from_hex("fffffffffffffff");
-  ASSERT(0 == strcmp("1000000000000000", (s = apint_format_as_hex(result))));
+  ASSERT(0 == strcmp("fffffffffffffff", (s = apint_format_as_hex(result))));
   apint_destroy(result);
   free(s);
 
-   /* test 4  case ffffffffffffffff (16fs) */
-  result= apint_create_from_hex("ffffffffffffffff");
-  ASSERT(0 == strcmp("ffffffffffffffff", (s = apint_format_as_hex(result))));
+  /* test 5 case 5ef47890432711 */
+  result= apint_create_from_hex("5ef47890432711");
+  ASSERT(0 == strcmp("5ef47890432711", (s = apint_format_as_hex(result))));
   apint_destroy(result);
   free(s);
+
+  /* test 6 case ffffffffffffffff (16fs)/objs->max1 */
+  result= apint_create_from_hex("ffffffffffffffff");
+  ASSERT(0 == strcmp((s1 = apint_format_as_hex(objs->max1)), (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+  free(s1);
+
+  /* test 7 case ffffffffffffffff (17fs) */
+  result= apint_create_from_hex("fffffffffffffffff");
+  ASSERT(0 == strcmp("fffffffffffffffff", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+
+  /* test 8 very large value */
+  result= apint_create_from_hex("5f67123904536128ab33d56f9001faa56734289fbcc2dd459801aeee64817");
+  ASSERT(0 == strcmp("5f67123904536128ab33d56f9001faa56734289fbcc2dd459801aeee64817", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+
+  /* test 9 very large value */
+  result= apint_create_from_hex("1ef34a231e678b942dd12678cc09345af256341dc007543abb7983241fff8653244590005ff6");
+  ASSERT(0 == strcmp("1ef34a231e678b942dd12678cc09345af256341dc007543abb7983241fff8653244590005ff6", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+
+  /* test 10 negative value */
+  result= apint_create_from_hex("-16b743");
+  ASSERT(0 == strcmp("-16b743", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+
+  /* test 11 negative value */
+  result= apint_create_from_hex("-45ff3216ee");
+  ASSERT(0 == strcmp("-45ff3216ee", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+
+  /* test 12 leading zeroes */
+  result= apint_create_from_hex("000000000001");
+  ASSERT(0 == strcmp((s1 = apint_format_as_hex(objs->ap1)), (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+  free(s1);
+
+  /* test 13 negative value */
+  result= apint_create_from_hex("000456ffe23");
+  ASSERT(0 == strcmp("456ffe23", (s = apint_format_as_hex(result))));
+  apint_destroy(result);
+  free(s);
+  
 }

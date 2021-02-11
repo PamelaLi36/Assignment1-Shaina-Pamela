@@ -29,90 +29,48 @@ ApInt *apint_create_from_u64(uint64_t val) {
   return new_apint;
 }
 
-ApInt *apint_create_from_hex(const char *hex) {
-  printf("\ncreating from hex!\nhere is your hex string: %s\n", hex);
-  
+ApInt *apint_create_from_hex(const char *hex) {  
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
+  int startidx = 0;
   new_apint->len = 1;
-
-  int hasMinus = 0;
   new_apint->isNegative = false;
 
+  //if there are any leading zeroes
+  if(hex[startidx] == 0) {
+    while(hex[startidx] == 0) { startidx++; }
+  }
+
+  //if there is overflow 
   if((strlen(hex) >= 16) && (hex[0] != '-')) {
-    printf("this is a large value. strlen(hex) is: %d, adding length\n", strlen(hex)); 
-    new_apint->len += strlen(hex)/16; //not going to work with multiples of 16
-    printf("len is %d\n", new_apint->len);
+    new_apint->len += (strlen(hex) - 1)/16;
   }
   
   else if (hex[0] == '-') {
-    printf("this is a negative hex value\n");
     new_apint->len += (strlen(hex) - 1)/16;
     new_apint->isNegative = true;
-    hasMinus = 1;
+    startidx = 1;
   }
 
   new_apint->data = (uint64_t*)malloc(new_apint->len*sizeof(uint64_t));
-  int r = new_apint->len - 1; //new array 
+  int r = new_apint->len - 1;
   int position = 0;
   uint64_t sum = 0;
-
-  int i = strlen(hex)-1; //string
-
-  // check: leading zeros case
-  // before adding shift the sum (4 to the left)
-  // change indx every x bits
+  int i = strlen(hex)-1;
+ 
   while(r >= 0) {
-    int ctbit = 0;
-    printf("this is i: %d and r: %d\n", i, r);
-    
-    while(ctbit < 15 && (i >= hasMinus)) { //(i > (r*16 - 16)) && (i>=hasMinus)) {
-      ctbit++;
-      //sum<<4;
-      printf("here is eresult of hextodeci function: %lu\n", hexi_to_deci(hex[i]));
-      sum += hexi_to_deci(hex[i]) * pow(16,position);
+    while(position < 16 && (i >= startidx)) {
+      sum += (uint64_t)(hexi_to_deci(hex[i])) * (uint64_t)(pow(16,position));
       i--;
       position++;
     }
-   
+
     new_apint->data[r] = sum;
-    printf("i before new r: %d\nthe value in new_apint->d[r] is %lu\n", i, new_apint->data[r]);
-      
-    //reset
-    //position = 0;
-    sum = 0; //check
-    r--;
-  
-  }
-  
-  /*for (int i = strlen(hex)-1; i >= 0 + hasMinus; i--) {
-    printf("here is hex(i): %c\n", hex[i]);
- 
-    //TEST
-    if(i/16 > 0) {
-      printf("this is r: %d\n", r);
-      while(i > (r*16 - 16)) {
-	sum += hexi_to_deci(hex[i]) * 16(position);
-	i--;
-      }
-      printf("the value in new_apint->d[r] is %lu\n", sum);
-      new_apint->data[r] = sum;
-      
-      //reset
-      sum = 0;
-      position = 0;
-      r--;
-    } // might need to fix i
-
-    if(i/16 == 0){
-      sum += hexi_to_deci(hex[i]) * 16^(position); //+=
-      position++;
-    } 
     
-  } */
-
-  
-  //new_apint->data[0] = sum; //?
-      
+    //reset
+    position = 0;
+    sum = 0;
+    r--;
+  }
   return new_apint;
 }
 
