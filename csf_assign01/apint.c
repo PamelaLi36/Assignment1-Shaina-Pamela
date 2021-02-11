@@ -178,9 +178,11 @@ ApInt *apint_negate(const ApInt *ap) {
   //create new ApInt instance to return with same numerical value as ap
   ApInt * new_apint = (ApInt*)malloc(sizeof(ApInt));
   new_apint->data = (uint64_t*)malloc( ap->len * sizeof(uint64_t));
-  new_apint->data[0] = ap->data[0];
+  //new_apint->data[0] = ap->data[0];
   new_apint->len = ap->len;
-  
+  for (int i = 0; i <  new_apint->len;i++){
+    new_apint->data[i] = ap->data[i];
+  }
   if( ( apint_is_zero(ap) ) || ( ap->isNegative ) ) { //checks if ap is negative and sets new ApInt instance to opposite sign
     new_apint->isNegative = false;
   } else {
@@ -237,7 +239,27 @@ ApInt *apint_sub(const ApInt *a, const ApInt *b) {
   new_a->isNegative = false;
   ApInt * new_b = apint_negate(b);
   new_b->isNegative = false;
-  
+  printf("\nThis is a: ");
+  for ( int i = 0 ; i < a->len; i++){
+    printf("%lu ", a->data[i]);
+  }
+  printf("\n");
+   printf("\nThis is b: ");
+    for ( int i = 0 ; i < b->len; i++){
+    printf("%lu ", b->data[i]);
+  }
+  printf("\n");
+  printf("\nThis is new_a: ");
+  for ( int i = 0 ; i < new_a->len; i++){
+    printf("%lu ", new_a->data[i]);
+  }
+  printf("\n");
+   printf("\nThis is new_b: ");
+    for ( int i = 0 ; i < new_b->len; i++){
+    printf("%lu ", new_b->data[i]);
+  }
+  printf("\n");
+
   if((a->isNegative && b->isNegative)||(!(a->isNegative) && !(b->isNegative))) { //-a + b  , a - b ,  b- a, -b - (-a)
     new_apint = unsigned_sub(new_a, new_b);
     if ( apint_compare(new_a,new_b) == 1 ) {//comparing magnitudes
@@ -366,7 +388,7 @@ ApInt * unsigned_add(ApInt *a, ApInt *b) {
     //uint64_t* temp2 = new_data->data;
     //new_data->data =
     add_padding(new_data->data, other->len, (other->len + 1));
-    //new_data->len = (other->len + 1);
+    new_data->len = (other->len + 1);
     new_data->data[0] = 1ul;
     printf("In overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data->data[0],  new_data->data[1]);
     //apint_destroy(temp2); 
@@ -451,7 +473,7 @@ uint64_t* add_padding(uint64_t* a, uint32_t curr_len,uint32_t new_len){
   
   for ( int i = curr_len -1; i >= 0 ; i--){
     temp[r] = a[i];
-    printf("temp[%d] = %lu\n", r,  temp[r]);
+    printf("a[%d] = %lu , temp[%d] = %lu\n",i, a[i],r, temp[r]);
     r--;
   }
   for ( ; r >= 0; r--){
