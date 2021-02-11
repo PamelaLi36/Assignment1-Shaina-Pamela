@@ -204,10 +204,8 @@ extern "C" {
    * Returns:
    *   a uint64_t instance representing the sum of a and b.
    */
-  uint64_t addVal(uint64_t a, uint64_t b);
-
-  void add_reorganize(ApInt* a);
-  
+  ApInt * unsigned_add(ApInt *a, ApInt *b);
+  uint64_t* rem_padding(uint64_t * a, uint32_t curr_len);
   /*
    * Computes the difference of two unsigned integers (uint64_t) instances.
    *
@@ -218,10 +216,9 @@ extern "C" {
    * Returns:
    *   an uint64_t instance representing the difference  of a and b.
    */
-  uint64_t subVal(uint64_t a, uint64_t b);
+  ApInt * unsigned_sub(ApInt *a, ApInt *b);
+  uint64_t* add_padding(uint64_t * a,uint32_t curr_len,  uint32_t new_len);
 
-  void sub_reorganize(ApInt* a);
-  
   char deci_to_hexi(uint64_t temp);
 
   uint64_t hexi_to_deci(const char hex);
