@@ -490,6 +490,8 @@ uint64_t* rem_padding(uint64_t* a, uint32_t curr_len){
    for (int j = 0; j < (curr_len - num2remove); j++){
      printf("%lu ", temp[j]);
    }
+   printf("This was before remove padding: %lu\n", curr_len);
+    printf("This was after remove padding: %lu\n", curr_len-num2remove);
    //free(a->data);
    //a->data = temp;
    //a->len = (a->len - num2remove);
