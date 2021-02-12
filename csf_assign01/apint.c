@@ -127,7 +127,35 @@ int apint_highest_bit_set(const ApInt *ap) {
 
   return highest_bit;
 }
+/* Bonus 
+ApInt* apint_lshift_n(ApInt *ap, unsigned n){
+  uint64_t carryover = 0; //bits to be carried into the next index
+  uint64_t temp = 0; //bits displaced by shift in current index
+  for(int i = ap->len-1; i >= 0; i--){
+    carryover = temp;
+    temp = 0;
+    for (int j = 0; j < n; j++){ //determine what to add on over
+      if (ap->data[i] & (2ul<<62)) {
+	temp++; //before:00000 10100, 00001 010000 ( carry = 001), 00010 10000 ( carry = 0101
+      }
+      else{
+	temp<<=1;
+      }
+      ap->data[i] <<= 1;
+    }
+    
+    if (carryover >= 1){ 
+      ap->data[i] += carryover;
+      carryover = 0;
+    }
+  }
+  return ap;
+}
 
+ApInt* apint_lshift(ApInt *ap){
+  return apint_lshift_n(ap, 1);
+}
+*/
 char *apint_format_as_hex(const ApInt *ap) {
   char store[2 + 16*ap->len]; //16 hexidecimal + '\0' + '-' = 18
   char* storep = store; 
@@ -422,33 +450,37 @@ ApInt * unsigned_sub(ApInt *a, ApInt *b) { //just need the magnitude
    new_data->data = (uint64_t*)malloc((temp->len) *sizeof(uint64_t));
   new_data->len = (temp->len);
   for( int i = temp->len -1; i >= 0; i--){
-    printf("Current vals: temp[i] = %lu and other[i] = %lu\n",temp->data[i],temp->data[i] );
-    if ((borrow > 1) && other->data[i] != 0){ //checking if you need to borrow
+    printf("Current vals: temp[i] = %lu and other[i] = %lu\n",temp->data[i],other->data[i] );
+    if ((borrow > 0) && other->data[i] != 0){ //checking if you need to borrow
       printf("Need to borrow from next index\n");
       other->data[i] -= borrow;
       borrow = 0; 
     }
     if ((other->data[i] < temp->data[i])&& (other->len > 1)){
       printf("Need to borrow bc other is smaller than data\n");
-      borrow += 1u;
+      borrow += 1UL;
     }
     if ( temp->data[i] > other->data[i]) { // getting the magnitude 
       new_data->data[i] = temp->data[i] - other->data[i];
+      printf("This is new data[%d]: %lu/n", i, new_data->data[i]);
       printf("Now subtracting %lu - %lu = %lu\n", temp->data[i],other->data[i],  new_data->data[i]);
     }else {
       new_data->data[i] = other->data[i] - temp->data[i];
+      printf("This is new data[%d]: %lu/n", i, new_data->data[i]);
       printf("Now subtracting %lu - %lu = %lu\n",other->data[i],temp->data[i],  new_data[i]);
     } 
     
-    if ((borrow > 0) && (other->data[i] == 0)){ //when its 0 
-      new_data->data[i] = ((2ul << 63) - 1) - new_data->data[i];
-      borrow--;
-      printf("After borrow: %lu\n", new_data->data[i]);
+    if ((borrow > 0) && (other->data[i] == 0)){ //when its 0 maybe combine to the other if at top 
+      new_data->data[i] = ((2uL << 63) - 1) - new_data->data[i];
+      //borrow--;//check val of borrow
+      printf("Execute only when other is 0.After borrow: %lu\n", new_data->data[i]);
     }
     else if ( borrow > 0) { 
-      new_data->data[i] = ((2ul << 63) - 1) - new_data->data[i];
-      new_data->data[i] = new_data->data[i] -1;
+      new_data->data[i] = ((2uL << 63)) - new_data->data[i];
+      //new_data->data[i] = new_data->data[i] + (2uL>>1);
+      printf("General borrowing:After borrow: %lu\n", new_data->data[i]);
     }
+    printf("This is borrow at the end of each iteration: %lu\n", borrow);
   } //end of for loop 
   if ((new_data->data[0] == 0) && (new_data->len >1)) {
     uint64_t* temp2 = new_data->data;
