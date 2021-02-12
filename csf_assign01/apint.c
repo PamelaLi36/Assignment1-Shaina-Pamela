@@ -177,7 +177,7 @@ char *apint_format_as_hex(const ApInt *ap) {
       appendZeros = 16;
     }
     
-    while ((temp != 0) || appendZeros > 0){
+    while ((temp != 0) || appendZeros > 0){ //problem arry conditional jump
       *(storep + idx) = deci_to_hexi(temp%16);
       idx++;
       temp = temp/16;
@@ -198,7 +198,7 @@ char *apint_format_as_hex(const ApInt *ap) {
   }
  
   *(return_string + i) = '\0';
-  printf("returning following string: %s\n", return_string);
+  //printf("returning following string: %s\n", return_string);
   return return_string;
 }
 
@@ -386,7 +386,7 @@ ApInt * unsigned_add(ApInt *a, ApInt *b) {
 
    printf("Entered unsigned_add\n");
   if ( a->len < b->len ) {
-    temp->data =add_padding(a->data,a->len, b->len);
+    temp->data = add_padding(a->data,a->len, b->len);
     temp->len = b->len;
     other = b; 
   }
@@ -413,18 +413,17 @@ ApInt * unsigned_add(ApInt *a, ApInt *b) {
   }
   
   if (overflow == 1) {
-    //uint64_t* temp2 = new_data->data;
-    //new_data->data =
-    add_padding(new_data->data, other->len, (other->len + 1));
+    uint64_t* temp2 = new_data->data;
+    new_data->data = add_padding(new_data->data, other->len, (other->len + 1));
     new_data->len = (other->len + 1);
     new_data->data[0] = 1ul;
-    printf("In overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data->data[0],  new_data->data[1]);
-    //apint_destroy(temp2); 
+    //    printf("In overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data->data[0],  new_data->data[1]);
+    free(temp2); 
   }
   apint_destroy(temp);
   //apint_destroy(temp2);
   // printf("Return from unsigned_add with: %lu + %lu = %lu\n", a->data[0], b->data[0],new_data[0]);    
-  printf("Outside of overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data->data[0],  new_data->data[1]);
+  // printf("Outside of overflow: new_data[0]= %lu,  new_data[1]= %lu\n", new_data->data[0],  new_data->data[1]);
   return new_data;
 }
 
@@ -432,8 +431,9 @@ ApInt * unsigned_add(ApInt *a, ApInt *b) {
 ApInt * unsigned_sub(ApInt *a, ApInt *b) { //just need the magnitude
   ApInt* temp = (ApInt*)malloc( 1 *sizeof(ApInt)); //has the smaller number
   ApInt* other = NULL; //other is the bigger number
-  uint64_t borrow = 0; 
-  //boolean isGreater; //temp is greater 
+  uint64_t borrow = 0;
+  //  uint64_t borrow_Zero = 0; //for case of double borrow
+  
   printf("Now in unsigned_sub\n");
   if ( a->len < b->len ) {
     temp->data = add_padding(a->data,a->len, b->len);
@@ -463,11 +463,11 @@ ApInt * unsigned_sub(ApInt *a, ApInt *b) { //just need the magnitude
     if ( temp->data[i] > other->data[i]) { // getting the magnitude 
       new_data->data[i] = temp->data[i] - other->data[i];
       printf("This is new data[%d]: %lu/n", i, new_data->data[i]);
-      printf("Now subtracting %lu - %lu = %lu\n", temp->data[i],other->data[i],  new_data->data[i]);
+      // printf("Now subtracting %lu - %lu = %lu\n", temp->data[i],other->data[i],  new_data->data[i]);
     }else {
       new_data->data[i] = other->data[i] - temp->data[i];
       printf("This is new data[%d]: %lu/n", i, new_data->data[i]);
-      printf("Now subtracting %lu - %lu = %lu\n",other->data[i],temp->data[i],  new_data[i]);
+      //      printf("Now subtracting %lu - %lu = %lu\n",other->data[i],temp->data[i],  new_data[i]);
     } 
     
     if ((borrow > 0) && (other->data[i] == 0)){ //when its 0 maybe combine to the other if at top 
@@ -485,7 +485,7 @@ ApInt * unsigned_sub(ApInt *a, ApInt *b) { //just need the magnitude
   if ((new_data->data[0] == 0) && (new_data->len >1)) {
     uint64_t* temp2 = new_data->data;
     new_data = rem_padding(new_data, temp->len);
-    apint_destroy(temp2); 
+    free(temp2); 
   }
   apint_destroy(temp);
   //apint_destroy(temp2);   
@@ -517,7 +517,7 @@ uint64_t* add_padding(uint64_t* a, uint32_t curr_len,uint32_t new_len){
    for (int j = 0; j < new_len-1; j++){
      printf("%lu ", temp[j]);
    }
-   //free(a->data);
+   //   free(a);
    //a->data = temp;
    //a->len = new_len;
    
