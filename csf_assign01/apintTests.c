@@ -45,6 +45,7 @@ void testFormatAsHex(TestObjs *objs);
 void testAdd(TestObjs *objs);
 void testSub(TestObjs *objs);
 void testCreateFromHex(TestObjs *objs);
+void testShift(TestObjs *objs);
 /* TODO: add more test function prototypes */
 
 int main(int argc, char **argv) {
@@ -58,15 +59,16 @@ int main(int argc, char **argv) {
 		tctest_testname_to_execute = argv[1];
 	}
 
-	TEST(testCreateFromU64);
-	TEST(testHighestBitSet);
-	TEST(testCompare);
-	TEST(testFormatAsHex);
-	TEST(testAdd);
-	//TEST(testSub);
-	TEST(testCreateFromHex);
+	//	TEST(testCreateFromU64);
+	//TEST(testHighestBitSet);
+	//TEST(testCompare);
+	//TEST(testFormatAsHex);
+	//TEST(testAdd);
+	TEST(testSub);
+	//	TEST(testCreateFromHex);
+	TEST(testShift);
 	/* TODO: use TEST macro to execute more test functions */
-
+	
 	TEST_FINI();
 }
 
@@ -155,11 +157,11 @@ void testAdd(TestObjs *objs) {
 	free(s);
 	
 	/* -1 + 0 = -1 */
-	sum = apint_add(objs->minus1, objs->ap0);
+		sum = apint_add(objs->minus1, objs->ap0);
 	ASSERT(0 == strcmp("-1", (s = apint_format_as_hex(sum))));
 	apint_destroy(sum);
 	free(s);
-
+	
 	/* 1 + 1 = 2 */
 	sum = apint_add(objs->ap1, objs->ap1);
 	ASSERT(0 == strcmp("2", (s = apint_format_as_hex(sum))));
@@ -228,7 +230,7 @@ void testSub(TestObjs *objs) {
 	free(s); 
 
 	/* test involving larger values (with a negative difference) */
-	/*a = apint_create_from_hex("9fa0fb165441ade7cb8b17c3ab3653465e09e8078e09631ec8f6fe3a5b301dc");
+	 a = apint_create_from_hex("9fa0fb165441ade7cb8b17c3ab3653465e09e8078e09631ec8f6fe3a5b301dc");
 	b = apint_create_from_hex("7e35207519b6b06429378631ca460905c19537644f31dc50114e9dc90bb4e4ebc43cfebe6b86d");
 	diff = apint_sub(a, b);
 	ASSERT(0 == strcmp("-7e35207519b6afc4883c6fdd8898213a367d73b918de95f20766963b0251c622cd3ec4633b691",
@@ -236,7 +238,7 @@ void testSub(TestObjs *objs) {
 	apint_destroy(diff);
 	apint_destroy(b);
 	apint_destroy(a);
-	free(s); */
+	free(s); 
 }
 
 /* TODO: add more test functions */
@@ -330,3 +332,9 @@ void testCreateFromHex(TestObjs *objs) {
   free(s);
   
 }
+
+/*testShift(TestObjs *objs){
+  ApInt* tests = apint_lshift_n(objs->ap0);
+  ASSERT(-1 == apint_highest_bit_set(objs->ap0));
+  
+  }*/

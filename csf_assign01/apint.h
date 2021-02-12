@@ -190,8 +190,11 @@ extern "C" {
    */
   int apint_compare(const ApInt *left, const ApInt *right);
 
-
-
+  //Bonus Questions
+  
+  ApInt* apint_lshift_n(ApInt *ap, unsigned n);
+  
+  ApInt* apint_lshift(ApInt *ap);
   
   //Helper functions
   /*

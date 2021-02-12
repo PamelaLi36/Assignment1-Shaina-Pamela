@@ -127,7 +127,7 @@ int apint_highest_bit_set(const ApInt *ap) {
 
   return highest_bit;
 }
-/* Bonus 
+/* Bonus */ 
 ApInt* apint_lshift_n(ApInt *ap, unsigned n){
   uint64_t carryover = 0; //bits to be carried into the next index
   uint64_t temp = 0; //bits displaced by shift in current index
@@ -155,7 +155,7 @@ ApInt* apint_lshift_n(ApInt *ap, unsigned n){
 ApInt* apint_lshift(ApInt *ap){
   return apint_lshift_n(ap, 1);
 }
-*/
+
 char *apint_format_as_hex(const ApInt *ap) {
   char store[2 + 16*ap->len]; //16 hexidecimal + '\0' + '-' = 18
   char* storep = store; 
